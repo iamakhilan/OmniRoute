@@ -43,7 +43,7 @@ services:
       - key: OMNIROUTE_BUILD_MEMORY_MB
         value: "3072"
       - key: OMNIROUTE_BUILD_WORKERS
-        value: "1"
+        value: "2"
     disk:
       name: omniroute-data
       mountPath: /app/data
