@@ -1,7 +1,6 @@
 # Render-optimized Docker image.
-# The default OmniRoute image builds the full Next.js dashboard and also keeps
-# runner-web/runner-cli stages. Render only needs the API gateway, so this image
-# uses the project's backend-only build mode and a single Next.js page worker.
+# Render only needs the OmniRoute API gateway, so use the project's backend-only
+# Next.js build mode and keep the builder deliberately memory-constrained.
 
 FROM node:26-trixie-slim AS base
 WORKDIR /app
@@ -48,13 +47,12 @@ RUN --mount=type=cache,id=omniroute-npm-cache,target=/root/.npm,sharing=locked \
 
 COPY . ./
 
-# Backend-only mode stubs the ~126 dashboard leaf pages and layouts during the
-# build while preserving every route.ts API handler. This removes the heavy
-# dashboard client graph (Monaco, Recharts, XYFlow, Mermaid, icon packs) from
-# the production compilation and is specifically intended for headless/API
-# deployments.
+# Do not use `npm run build:backend` here: that npm script invokes `cross-env`,
+# which is not guaranteed to be installed in the production dependency tree.
+# The environment above already enables backend-only mode, so invoke the build
+# script directly. This avoids the exit-127 failure seen on Render.
 RUN mkdir -p /app/data \
-    && npm run build:backend \
+    && node scripts/build/build-next-isolated.mjs \
     && node --input-type=module -e "import { createRequire } from 'node:module'; import { pathToFileURL } from 'node:url'; const standaloneRoot = '/app/.build/next/standalone/node_modules/'; const require = createRequire('/app/.build/next/standalone/package.json'); for (const pkg of ['@atjsh/llmlingua-2', '@huggingface/transformers', 'js-tiktoken']) { const resolved = require.resolve(pkg); if (!resolved.startsWith(standaloneRoot)) throw new Error(pkg + ' resolved outside standalone: ' + resolved); await import(pathToFileURL(resolved).href); } const onnxRuntime = require.resolve('onnxruntime-node'); if (!onnxRuntime.startsWith(standaloneRoot)) throw new Error('onnxruntime-node resolved outside standalone: ' + onnxRuntime); await import(pathToFileURL(onnxRuntime).href);"
 
 FROM base AS runner
