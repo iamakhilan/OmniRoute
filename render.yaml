@@ -3,7 +3,7 @@ services:
     name: omniroute
     runtime: docker
     branch: release/v3.8.51
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.render
     dockerContext: .
     healthCheckPath: /healthz
     plan: 2c-8g
@@ -37,15 +37,7 @@ services:
       - key: OMNIROUTE_WS_BRIDGE_SECRET
         generateValue: true
       - key: OMNIROUTE_MEMORY_MB
-        value: "1536"
-      - key: OMNIROUTE_USE_TURBOPACK
-        value: "0"
-      - key: OMNIROUTE_BUILD_PROFILE
-        value: minimal
-      - key: OMNIROUTE_BUILD_MEMORY_MB
-        value: "2048"
-      - key: OMNIROUTE_BUILD_WORKERS
-        value: "1"
+        value: "6144"
     disk:
       name: omniroute-data
       mountPath: /app/data
