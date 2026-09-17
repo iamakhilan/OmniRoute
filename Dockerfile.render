@@ -1,6 +1,6 @@
-# Render-specific image: build the production API/runtime with the secure/minimal
-# OmniRoute profile so the Next.js dashboard is stubbed during compilation.
-# This keeps the Docker build substantially smaller than the full dashboard build.
+# Render-specific image: combine OmniRoute's backend-only build path with the
+# minimal security profile. This keeps the API/runtime while avoiding the heavy
+# dashboard compilation that exceeds Render's 8 GB build pipeline.
 
 FROM node:26-trixie-slim AS builder
 WORKDIR /app
@@ -9,6 +9,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV OMNIROUTE_USE_TURBOPACK=0
 ENV OMNIROUTE_BUILD_MEMORY_MB=1536
 ENV CIRCLE_NODE_TOTAL=2
+ENV OMNIROUTE_BUILD_PROFILE=minimal
 ENV OMNIROUTE_MITM_STUB=1
 ENV NPM_CONFIG_LEGACY_PEER_DEPS=true
 
@@ -32,10 +33,10 @@ RUN npm ci --include=optional --no-audit --no-fund --legacy-peer-deps --ignore-s
 
 COPY . ./
 
-# build:secure sets OMNIROUTE_BUILD_PROFILE=minimal. The minimal profile removes
-# optional privileged modules and stubs dashboard leaf pages while preserving the
-# API/runtime surface needed by a headless Render gateway.
-RUN npm run build:secure
+# build:backend enables OMNIROUTE_BUILD_BACKEND_ONLY=1. Together with the
+# minimal profile this stubs dashboard pages and removes optional privileged
+# modules during compilation, while still producing a standalone server bundle.
+RUN npm run build:backend
 
 FROM node:26-trixie-slim AS runner
 WORKDIR /app
