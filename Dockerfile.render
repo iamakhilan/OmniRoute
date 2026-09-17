@@ -1,4 +1,4 @@
-# Render-specific image: combine OmniRoute's backend-only build path with the
+# Render-specific image: combine OmniRoute's backend-only build path with a
 # minimal security profile. This keeps the API/runtime while avoiding the heavy
 # dashboard compilation that exceeds Render's 8 GB build pipeline.
 
@@ -7,7 +7,8 @@ WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV OMNIROUTE_USE_TURBOPACK=0
-ENV OMNIROUTE_BUILD_MEMORY_MB=1536
+ENV OMNIROUTE_BUILD_MEMORY_MB=5120
+ENV NODE_OPTIONS=--max-old-space-size=5120
 ENV CIRCLE_NODE_TOTAL=2
 ENV OMNIROUTE_BUILD_PROFILE=minimal
 ENV OMNIROUTE_MITM_STUB=1
@@ -58,6 +59,8 @@ COPY --from=builder /app/.build/next/standalone ./
 COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
 COPY --from=builder /app/scripts/dev/healthcheck.mjs ./healthcheck.mjs
 COPY --from=builder /app/scripts/check-permissions.sh ./check-permissions.sh
+
+RUN chmod +x ./check-permissions.sh
 
 RUN chown -R node:node /app
 USER node

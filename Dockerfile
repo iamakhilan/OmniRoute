@@ -19,7 +19,8 @@ ENV NODE_ENV=production
 ENV OMNIROUTE_USE_TURBOPACK=0
 ENV OMNIROUTE_BUILD_BACKEND_ONLY=1
 ENV OMNIROUTE_BUILD_PROFILE=backend
-ENV OMNIROUTE_BUILD_MEMORY_MB=1536
+ENV OMNIROUTE_BUILD_MEMORY_MB=5120
+ENV NODE_OPTIONS=--max-old-space-size=5120
 ENV CIRCLE_NODE_TOTAL=2
 ENV OMNIROUTE_MITM_STUB=1
 ENV NPM_CONFIG_LEGACY_PEER_DEPS=true
@@ -76,7 +77,8 @@ COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlit
 COPY --from=builder /app/scripts/dev/healthcheck.mjs ./healthcheck.mjs
 COPY --from=builder /app/scripts/check-permissions.sh ./check-permissions.sh
 
-RUN chown -R node:node /app
+RUN chmod +x ./check-permissions.sh \
+    && chown -R node:node /app
 USER node
 
 EXPOSE 20128
