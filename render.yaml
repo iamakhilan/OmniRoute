@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: omniroute
+    runtime: docker
+    branch: release/v3.8.51
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/monitoring/health
+    plan: starter
+    region: singapore
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "20128"
+      - key: HOSTNAME
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /app/data
+      - key: BASE_URL
+        value: http://127.0.0.1:20128
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: REQUIRE_API_KEY
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_KEY_SECRET
+        generateValue: true
+      - key: STORAGE_ENCRYPTION_KEY
+        generateValue: true
+      - key: STORAGE_ENCRYPTION_KEY_VERSION
+        value: v1
+      - key: MACHINE_ID_SALT
+        generateValue: true
+      - key: OMNIROUTE_WS_BRIDGE_SECRET
+        generateValue: true
+      - key: OMNIROUTE_MEMORY_MB
+        value: "1536"
+    disk:
+      name: omniroute-data
+      mountPath: /app/data
+      sizeGB: 1
