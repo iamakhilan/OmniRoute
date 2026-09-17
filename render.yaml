@@ -5,8 +5,8 @@ services:
     branch: release/v3.8.51
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /api/monitoring/health
-    plan: starter
+    healthCheckPath: /healthz
+    plan: 2c-8g
     region: singapore
     autoDeploy: true
     envVars:
@@ -37,7 +37,13 @@ services:
       - key: OMNIROUTE_WS_BRIDGE_SECRET
         generateValue: true
       - key: OMNIROUTE_MEMORY_MB
-        value: "1536"
+        value: "6144"
+      - key: OMNIROUTE_USE_TURBOPACK
+        value: "0"
+      - key: OMNIROUTE_BUILD_MEMORY_MB
+        value: "3072"
+      - key: OMNIROUTE_BUILD_WORKERS
+        value: "1"
     disk:
       name: omniroute-data
       mountPath: /app/data
