@@ -1,6 +1,6 @@
 import createNextIntlPlugin from "next-intl/plugin";
 import { createMDX } from "fumadocs-mdx/next";
-import { dirname } from "node:path";
+import { dirname, isAbsolute, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { betterSqlite3AliasFor } from "./scripts/build/better-sqlite3-stub-flag.mjs";
 import { mitmManagerAliasFor } from "./scripts/build/mitm-stub-flag.mjs";
@@ -12,8 +12,13 @@ import {
 } from "./scripts/build/dashboardEmbed.mjs";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
-const distDir = process.env.NEXT_DIST_DIR || ".build/next";
 const projectRoot = dirname(fileURLToPath(import.meta.url));
+const configuredDistDir = process.env.NEXT_DIST_DIR || ".build/next";
+// Next.js treats distDir as project-relative internally. Normalize an absolute
+// NEXT_DIST_DIR (common in Docker) before passing it to Next.
+const distDir = isAbsolute(configuredDistDir)
+  ? relative(projectRoot, configuredDistDir) || "."
+  : configuredDistDir;
 const scriptSrc =
   process.env.NODE_ENV === "development"
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://static.cloudflareinsights.com"
