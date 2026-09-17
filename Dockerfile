@@ -38,8 +38,12 @@ COPY scripts/build/native-binary-compat.mjs ./scripts/build/native-binary-compat
 RUN test -f package-lock.json \
     || (echo "package-lock.json is required for reproducible Docker builds" >&2 && exit 1)
 
+# The Next.js config imports build-time tooling such as fumadocs-mdx. NODE_ENV=production
+# would make npm ci omit devDependencies, causing the build to fail before Next can compile.
+# Include dev dependencies in the builder; the final runtime image only copies the standalone
+# production bundle and the native SQLite binding.
 RUN --mount=type=cache,id=omniroute-npm-cache,target=/root/.npm,sharing=locked \
-    npm ci --include=optional --no-audit --no-fund --legacy-peer-deps --ignore-scripts \
+    npm ci --include=dev --include=optional --no-audit --no-fund --legacy-peer-deps --ignore-scripts \
     && (cd node_modules/better-sqlite3 \
         && node /usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild) \
     && node -e "require('better-sqlite3')(':memory:').close()" \
@@ -47,10 +51,8 @@ RUN --mount=type=cache,id=omniroute-npm-cache,target=/root/.npm,sharing=locked \
 
 COPY . ./
 
-# Do not use `npm run build:backend` here: that npm script invokes `cross-env`,
-# which is not guaranteed to be installed in the production dependency tree.
 # The environment above already enables backend-only mode, so invoke the build
-# script directly. This avoids the exit-127 failure seen on Render.
+# script directly instead of npm run build:backend (which requires cross-env).
 RUN mkdir -p /app/data \
     && node scripts/build/build-next-isolated.mjs \
     && node --input-type=module -e "import { createRequire } from 'node:module'; import { pathToFileURL } from 'node:url'; const standaloneRoot = '/app/.build/next/standalone/node_modules/'; const require = createRequire('/app/.build/next/standalone/package.json'); for (const pkg of ['@atjsh/llmlingua-2', '@huggingface/transformers', 'js-tiktoken']) { const resolved = require.resolve(pkg); if (!resolved.startsWith(standaloneRoot)) throw new Error(pkg + ' resolved outside standalone: ' + resolved); await import(pathToFileURL(resolved).href); } const onnxRuntime = require.resolve('onnxruntime-node'); if (!onnxRuntime.startsWith(standaloneRoot)) throw new Error('onnxruntime-node resolved outside standalone: ' + onnxRuntime); await import(pathToFileURL(onnxRuntime).href);"
