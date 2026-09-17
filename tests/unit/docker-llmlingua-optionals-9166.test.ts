@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -238,6 +238,51 @@ test("#9166 co-location is not skipped when every closure dir exists but one is 
     assert.ok(
       existsSync(join(standaloneDir, "node_modules", "@atjsh", "llmlingua-2", "dist", "index.js")),
       "the closure-wide early-exit must not fire while any member is partial"
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
+});
+
+
+test("#9166 co-location replaces an internally symlinked package with a self-contained copy", () => {
+  const root = mkdtempSync(join(tmpdir(), "omniroute-docker-llmlingua-symlink-9166-"));
+
+  try {
+    buildLlmlinguaRoot(root);
+    const { distDir, standaloneDir } = createStandalone(root);
+    const standalonePackage = join(standaloneDir, "node_modules", "@atjsh", "llmlingua-2");
+    mkdirSync(join(standalonePackage, "dist"), { recursive: true });
+    writeFileSync(
+      join(standalonePackage, "package.json"),
+      JSON.stringify({ name: "@atjsh/llmlingua-2", main: "dist/index.js" })
+    );
+    rmSync(join(standalonePackage, "dist"), { recursive: true, force: true });
+    symlinkSync(
+      join(root, "node_modules", "@atjsh", "llmlingua-2", "dist"),
+      join(standalonePackage, "dist"),
+      "dir"
+    );
+
+    assembleStandalone({
+      distDir,
+      outDir: standaloneDir,
+      projectRoot: root,
+      copyNatives: true,
+    });
+
+    assert.equal(
+      readFileSync(
+        join(standalonePackage, "dist", "index.js"),
+        "utf8"
+      ),
+      "export const llmlingua = true;\n",
+      "the standalone package must contain its own payload"
+    );
+    assert.equal(
+      lstatSync(join(standalonePackage, "dist")).isSymbolicLink(),
+      false,
+      "the standalone package must not retain an internal symlink"
     );
   } finally {
     rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });

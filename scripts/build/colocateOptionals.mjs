@@ -110,6 +110,37 @@ export function computeDependencyClosure(nodeModulesDir, seeds = SEED_PACKAGES) 
  * @param {string} name
  * @returns {boolean}
  */
+function materializeSymlinkedPackageParents(targetNodeModulesDir, name) {
+  const parts = name.split("/");
+  if (parts.length < 2) return;
+
+  let current = targetNodeModulesDir;
+  for (const part of parts.slice(0, -1)) {
+    current = join(current, part);
+    let stat;
+    try {
+      stat = lstatSync(current);
+    } catch {
+      continue;
+    }
+    if (!stat.isSymbolicLink()) continue;
+
+    let realTarget;
+    try {
+      realTarget = realpathSync(current);
+    } catch {
+      realTarget = null;
+    }
+
+    rmSync(current, { recursive: true, force: true });
+    if (realTarget && existsSync(realTarget)) {
+      cpSync(realTarget, current, { recursive: true, dereference: true, force: true });
+    } else {
+      mkdirSync(current, { recursive: true });
+    }
+  }
+}
+
 function isPackageIntact(targetNodeModulesDir, name) {
   if (!existsSync(join(targetNodeModulesDir, name))) return false;
   try {
@@ -188,27 +219,19 @@ export function colocateLlmlinguaOptionals({
     if (isPackageIntact(targetNm, name)) continue;
 
     try {
+      materializeSymlinkedPackageParents(targetNm, name);
+
+      // A partially traced package can contain symlinks to the build root even
+      // when the package directory itself is real. Remove the entire target and
+      // replace it with a dereferenced copy so no stale link survives inside the
+      // standalone bundle. This is intentionally a full replacement only when
+      // isPackageIntact() has already proved the target is unusable.
+      rmSync(dest, { recursive: true, force: true });
       mkdirSync(dirname(dest), { recursive: true });
-
-      // Next/Turbopack may materialize an absolute symlink here. cpSync follows
-      // that link, so copying to `dest` would silently write into the build
-      // root instead of the standalone bundle. Remove symlinked targets first;
-      // real traced directories can still be merged in place.
-      let destIsSymlink = false;
-      try {
-        destIsSymlink = lstatSync(dest).isSymbolicLink();
-      } catch {
-        // Destination does not exist yet.
-      }
-      if (destIsSymlink) rmSync(dest, { recursive: true, force: true });
-
-      // force:false merges into a partially traced directory: files the trace
-      // already materialized are kept, missing ones (the package payload) are
-      // filled in from the root tree.
       cpSync(join(rootNm, name), dest, {
         recursive: true,
-        force: false,
-        errorOnExist: false,
+        dereference: true,
+        force: true,
       });
       copied++;
     } catch (err) {
