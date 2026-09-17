@@ -55,6 +55,7 @@ COPY . ./
 # script directly instead of npm run build:backend (which requires cross-env).
 RUN mkdir -p /app/data \
     && node scripts/build/build-next-isolated.mjs \
+    && node --input-type=module -e "import { colocateLlmlinguaOptionals, SEED_PACKAGES } from './scripts/build/colocateOptionals.mjs'; colocateLlmlinguaOptionals({ rootDir: '/app', targetNodeModulesDir: '/app/.build/next/standalone/node_modules', seeds: [...SEED_PACKAGES, '@huggingface/transformers'], log: (message) => console.log('[docker-standalone-repair] ' + message.trim()) });" \
     && node --input-type=module -e "import { createRequire } from 'node:module'; import { pathToFileURL } from 'node:url'; const standaloneRoot = '/app/.build/next/standalone/node_modules/'; const require = createRequire('/app/.build/next/standalone/package.json'); for (const pkg of ['@atjsh/llmlingua-2', '@huggingface/transformers', 'js-tiktoken']) { const resolved = require.resolve(pkg); if (!resolved.startsWith(standaloneRoot)) throw new Error(pkg + ' resolved outside standalone: ' + resolved); await import(pathToFileURL(resolved).href); } const onnxRuntime = require.resolve('onnxruntime-node'); if (!onnxRuntime.startsWith(standaloneRoot)) throw new Error('onnxruntime-node resolved outside standalone: ' + onnxRuntime); await import(pathToFileURL(onnxRuntime).href);"
 
 FROM base AS runner
