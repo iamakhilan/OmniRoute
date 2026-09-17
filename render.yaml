@@ -37,13 +37,13 @@ services:
       - key: OMNIROUTE_WS_BRIDGE_SECRET
         generateValue: true
       - key: OMNIROUTE_MEMORY_MB
-        value: "6144"
+        value: "1536"
       - key: OMNIROUTE_USE_TURBOPACK
         value: "0"
       - key: OMNIROUTE_BUILD_MEMORY_MB
-        value: "3072"
+        value: "2048"
       - key: OMNIROUTE_BUILD_WORKERS
-        value: "2"
+        value: "1"
     disk:
       name: omniroute-data
       mountPath: /app/data
