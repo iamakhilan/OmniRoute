@@ -4,10 +4,10 @@ This setup is designed for a long-lived OmniRoute Studio.
 
 ## Persistence
 
-Lightning AI Studios persist the Studio home directory across stop/restart. OmniRoute is explicitly configured by the Lightning launcher to use:
+Lightning AI Studios persist the Studio home directory across stop/restart. Lightning documents `/teamspace/studios/this_studio` as part of that persistent Studio home. OmniRoute is explicitly configured by the Lightning launcher to use:
 
 ```
-~/.omniroute
+`/teamspace/studios/this_studio/.omniroute`
 ```
 
 That directory contains the SQLite database, backups, logs, and provider configuration. Provider API keys created in the OmniRoute dashboard therefore remain after a Studio restart.
@@ -37,7 +37,7 @@ If you have a fixed public URL, set:
 NEXT_PUBLIC_BASE_URL=https://your-fixed-public-url
 ```
 
-as a persistent Studio environment variable. The launcher does not generate or rotate a public URL. The Lightning Studio/port exposure is responsible for the external URL.
+as a persistent Studio environment variable. The launcher does not generate or rotate a public URL; keep the same Lightning-exposed port/public URL and store it in `NEXT_PUBLIC_BASE_URL` if you want OmniRoute to display it consistently. The Lightning Studio/port exposure is responsible for the external URL.
 
 The same Studio and exposed port should be reused after restart; restarting the Studio does not recreate its persistent filesystem.
 
