@@ -7,10 +7,8 @@
  * Lightning Secrets (not committed to this repository).
  */
 import { spawn } from "node:child_process";
-import os from "node:os";
 import path from "node:path";
 
-const home = os.homedir();
 const persistentStudioDir = "/teamspace/studios/this_studio";
 const dataDir = process.env.DATA_DIR?.trim() || path.join(persistentStudioDir, ".omniroute");
 
