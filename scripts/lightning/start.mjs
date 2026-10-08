@@ -11,7 +11,8 @@ import os from "node:os";
 import path from "node:path";
 
 const home = os.homedir();
-const dataDir = process.env.DATA_DIR?.trim() || path.join(home, ".omniroute");
+const persistentStudioDir = "/teamspace/studios/this_studio";
+const dataDir = process.env.DATA_DIR?.trim() || path.join(persistentStudioDir, ".omniroute");
 
 const env = {
   ...process.env,
