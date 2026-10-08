@@ -6,9 +6,7 @@ This setup is designed for a long-lived OmniRoute Studio.
 
 Lightning AI Studios persist the Studio home directory across stop/restart. Lightning documents `/teamspace/studios/this_studio` as part of that persistent Studio home. OmniRoute is explicitly configured by the Lightning launcher to use:
 
-```
 `/teamspace/studios/this_studio/.omniroute`
-```
 
 That directory contains the SQLite database, backups, logs, and provider configuration. Provider API keys created in the OmniRoute dashboard therefore remain after a Studio restart.
 
