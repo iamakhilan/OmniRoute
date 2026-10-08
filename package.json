@@ -297,7 +297,8 @@
     "i18n:check-new-keys": "node scripts/i18n/check-new-key-coverage.mjs",
     "i18n:translate-new-keys": "bash scripts/i18n/translate-new-keys.sh",
     "i18n:check-keys": "node scripts/i18n/check-key-completeness.mjs",
-    "i18n:check-keys:cli": "node scripts/i18n/check-key-completeness.mjs --catalog=cli"
+    "i18n:check-keys:cli": "node scripts/i18n/check-key-completeness.mjs --catalog=cli",
+    "lightning:start": "node scripts/lightning/start.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1120.0",
@@ -552,4 +553,4 @@
     },
     "csv-parse": "^7.0.2"
   }
-}
+}\n
